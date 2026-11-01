@@ -22,7 +22,12 @@ export async function connectToMongoDB() {
 connectToMongoDB()
 
 
-//http://localhost:8000/
+app.post('/add-studio', (req,res) => {
+    console.log('api called')
+     res.send({message: 'api working'})
+})
+
+//http://localhost:8000/add-studio
 app.get('/', (req, res) => {
   res.send('Hello server !')
 })
