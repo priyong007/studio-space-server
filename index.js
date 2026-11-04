@@ -22,7 +22,8 @@ export async function connectToMongoDB() {
 
 const mongoClient= await  connectToMongoDB();
 const db = mongoClient.db('studio-space');
-const studioCollection = db.collection('studio')
+const studioCollection = db.collection('studio');
+const listCollection = db.collection('myList')
 
 
 app.post('/add-studio', async(req,res) => {
@@ -43,13 +44,37 @@ app.get('/studios', async(req,res) => {
 })
 
 
-app.get('/studio/:id', async(req,res) => {
+app.get('/studios/:id', async(req,res) => {
     const {id} = req.params
     const result = await studioCollection.findOne({_id: new ObjectId(id)})
      res.send(result)
 })
 
-//http://localhost:8000/add-studio
+app.post('/listing', async(req,res) => {
+    const data = req.body
+    const result = await listCollection.insertOne(data);
+    console.log(data);
+    console.log(result)
+    
+     res.send(result)
+})
+
+
+app.get('/my-listing/:email', async(req,res) => {
+    const {email} = req.params;
+    console.log("Received ID:", email);
+    const result = await listCollection.find({ email }).toArray();
+    console.log(result)
+     res.send(result)
+})
+
+app.delete('/my-listing/:id', async(req,res) => {
+    const {id} = req.params
+    const result = await listCollection.deleteOne({_id: new ObjectId(id)})
+     res.send(result)
+})
+
+//http://localhost:8000/my-listing/
 app.get('/', (req, res) => {
   res.send('Hello server !')
 })
