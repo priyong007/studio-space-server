@@ -2,12 +2,15 @@ import express from 'express'
 import { MongoClient, ObjectId } from 'mongodb';
 import 'dotenv/config'
 import cors from 'cors'
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const app = express()
 const port = 8000;
 
 app.use(cors());
 app.use(express.json());
+
+
 const client = new MongoClient(process.env.MONGODB_URL);
 
 export async function connectToMongoDB() {
@@ -27,7 +30,47 @@ const listCollection = db.collection('myList')
 const bookCollection = db.collection('myBook')
 
 
-app.post('/add-studio', async(req,res) => {
+
+const varifyToken = async(req,res,next) => {
+     const authHeader = req.headers.authorization;
+     console.log(authHeader)
+     if(!authHeader){
+        return res.status(401).send({msg: 'unauthorized'})
+     }
+    
+     const token =  authHeader.split(' ')[1]
+     console.log(token)
+    if(!token){
+        return res.status(401).send({msg: 'unauthorized'})
+    }
+
+    // if(authHeader !== 'user logged in'){
+    //     return res.status(401).send({msg: 'Unauthorized!'})
+    // }
+    
+
+    const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URL}/api/auth/jwks`))
+
+    
+
+    try {
+        const {payload} = await jwtVerify(token, JWKS)
+        // console.log(payload)
+        next()
+    } catch (error) {
+        console.log(error)
+         return res.status(500).send({msg: 'server error!'})
+    }
+    // console.log(payload)
+    // console.log('im middleware')
+    
+    
+}
+    
+    
+
+
+app.post('/add-studio',varifyToken, async(req,res) => {
     const data = req.body
     const result = await studioCollection.insertOne(data);
     console.log(data);
@@ -45,7 +88,7 @@ app.get('/studios', async(req,res) => {
 })
 
 
-app.get('/studios/:id', async(req,res) => {
+app.get('/studios/:id',varifyToken, async(req,res) => {
     const {id} = req.params
     const result = await studioCollection.findOne({_id: new ObjectId(id)})
      res.send(result)
@@ -86,6 +129,12 @@ app.get('/my-booking/:email', async(req,res) => {
 app.delete('/my-listing/:id', async(req,res) => {
     const {id} = req.params
     const result = await listCollection.deleteOne({_id: new ObjectId(id)})
+     res.send(result)
+})
+
+app.delete('/my-booking/:id', async(req,res) => {
+    const {id} = req.params
+    const result = await bookCollection.deleteOne({_id: new ObjectId(id)})
      res.send(result)
 })
 
