@@ -24,6 +24,7 @@ const mongoClient= await  connectToMongoDB();
 const db = mongoClient.db('studio-space');
 const studioCollection = db.collection('studio');
 const listCollection = db.collection('myList')
+const bookCollection = db.collection('myBook')
 
 
 app.post('/add-studio', async(req,res) => {
@@ -53,6 +54,13 @@ app.get('/studios/:id', async(req,res) => {
 app.post('/listing', async(req,res) => {
     const data = req.body
     const result = await listCollection.insertOne(data);
+    
+     res.send(result)
+})
+
+app.post('/booking', async(req,res) => {
+    const data = req.body
+    const result = await bookCollection.insertOne(data);
     console.log(data);
     console.log(result)
     
@@ -64,6 +72,13 @@ app.get('/my-listing/:email', async(req,res) => {
     const {email} = req.params;
     console.log("Received ID:", email);
     const result = await listCollection.find({ email }).toArray();
+    
+})
+
+app.get('/my-booking/:email', async(req,res) => {
+    const {email} = req.params;
+    console.log("Received ID:", email);
+    const result = await bookCollection.find({ email }).toArray();
     console.log(result)
      res.send(result)
 })
